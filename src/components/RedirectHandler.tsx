@@ -10,35 +10,44 @@ export default function RedirectHandler() {
       if (!path) return;
 
       try {
-        // First check whatsapp_groups
-        const { data: groupData } = await supabase
-          .from('whatsapp_groups')
-          .select('id')
-          .eq('group_id', path)
-          .single();
+        // Check if it's a WhatsApp route
+        if (path.startsWith('ws/')) {
+          const groupId = path.substring(3); // Remove 'ws/' prefix
+          const { data: groupData, error: groupError } = await supabase
+            .from('whatsapp_groups')
+            .select('id')
+            .eq('group_id', groupId)
+            .single();
 
-        if (groupData) {
-          // Get all phone numbers for this group
-          const { data: numbers } = await supabase
-            .from('whatsapp_numbers')
-            .select('country_code, phone_number')
-            .eq('group_id', groupData.id);
+          if (groupError) throw groupError;
 
-          if (numbers && numbers.length > 0) {
-            // Randomly select a number
-            const randomNumber = numbers[Math.floor(Math.random() * numbers.length)];
-            const whatsappUrl = `https://wa.me/${randomNumber.country_code.replace('+', '')}${randomNumber.phone_number}`;
-            window.location.href = whatsappUrl;
-            return;
+          if (groupData) {
+            const { data: numbers, error: numbersError } = await supabase
+              .from('whatsapp_numbers')
+              .select('country_code, phone_number')
+              .eq('group_id', groupData.id);
+
+            if (numbersError) throw numbersError;
+
+            if (numbers && numbers.length > 0) {
+              const randomNumber = numbers[Math.floor(Math.random() * numbers.length)];
+              const whatsappUrl = `https://wa.me/${randomNumber.country_code.replace('+', '')}${randomNumber.phone_number}`;
+              window.location.href = whatsappUrl;
+              return;
+            }
           }
+          setError('WhatsApp group not found');
+          return;
         }
 
-        // If not a WhatsApp group, check regular links
-        const { data: linkData } = await supabase
+        // Handle regular short links
+        const { data: linkData, error: linkError } = await supabase
           .from('links')
           .select('original_url')
           .eq('short_id', path)
           .single();
+
+        if (linkError) throw linkError;
 
         if (linkData) {
           window.location.href = linkData.original_url;

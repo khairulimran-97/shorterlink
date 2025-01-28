@@ -59,6 +59,7 @@ export default function RotateWhatsApp() {
 
       if (existingGroup) {
         setError('This short ID is already taken. Please choose another one.');
+        setLoading(false);
         return;
       }
 
@@ -87,7 +88,7 @@ export default function RotateWhatsApp() {
       if (numbersError) throw numbersError;
 
       const baseUrl = window.location.origin;
-      setGeneratedLink(`${baseUrl}/${shortId}`);
+      setGeneratedLink(`${baseUrl}/ws/${shortId}`);
       
       // Reset form
       setGroupName('');
