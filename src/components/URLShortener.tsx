@@ -30,7 +30,14 @@ export default function URLShortener() {
     setError('');
     const shortId = nanoid(8);
     const baseUrl = window.location.origin;
-    setShortUrl(`${baseUrl}/${shortId}`);
+    const newShortUrl = `${baseUrl}/${shortId}`;
+    
+    // Store the mapping in localStorage
+    const urlMappings = JSON.parse(localStorage.getItem('urlMappings') || '{}');
+    urlMappings[shortId] = url;
+    localStorage.setItem('urlMappings', JSON.stringify(urlMappings));
+    
+    setShortUrl(newShortUrl);
   };
 
   const copyToClipboard = () => {
