@@ -70,7 +70,7 @@ export default function URLShortener() {
 
       const baseUrl = window.location.origin;
       setShortUrl(`${baseUrl}/${shortId}`);
-      setUrl(''); // Clear the input after successful generation
+      setUrl('');
     } catch (err) {
       setError('Failed to generate short URL. Please try again.');
     } finally {
@@ -83,16 +83,16 @@ export default function URLShortener() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="space-y-4">
         {connectionStatus === 'checking' && (
-          <div className="text-blue-500">Checking Supabase connection...</div>
+          <div className="text-blue-500 text-sm">Checking Supabase connection...</div>
         )}
         {connectionStatus === 'success' && (
-          <div className="text-green-500">✓ Connected to Supabase</div>
+          <div className="text-green-500 text-sm">✓ Connected to Supabase</div>
         )}
         {connectionStatus === 'error' && (
-          <div className="text-red-500">× Failed to connect to Supabase</div>
+          <div className="text-red-500 text-sm">× Failed to connect to Supabase</div>
         )}
 
         <div>
@@ -103,7 +103,7 @@ export default function URLShortener() {
               setUrl(e.target.value);
               setError('');
             }}
-            className={`w-full px-3 py-2 border rounded-lg ${
+            className={`w-full px-3 py-2 border rounded-lg text-sm sm:text-base ${
               error ? 'border-red-500' : ''
             }`}
             placeholder="Enter URL to shorten..."
@@ -114,7 +114,7 @@ export default function URLShortener() {
         <button
           onClick={generateShortUrl}
           disabled={loading}
-          className="w-full px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 disabled:bg-blue-300"
+          className="w-full px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 disabled:bg-blue-300 text-sm sm:text-base"
         >
           {loading ? (
             <span className="flex items-center justify-center">
@@ -122,26 +122,26 @@ export default function URLShortener() {
             </span>
           ) : (
             <>
-              <Link className="inline-block w-5 h-5 mr-2" />
+              <Link className="inline-block w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               Shorten URL
             </>
           )}
         </button>
 
         {shortUrl && (
-          <div className="p-4 border rounded-lg">
+          <div className="p-3 sm:p-4 border rounded-lg">
             <div className="flex items-center justify-between gap-2">
               <input
                 type="text"
                 value={shortUrl}
                 readOnly
-                className="flex-1 px-3 py-2 bg-gray-50 rounded-lg"
+                className="flex-1 px-3 py-2 bg-gray-50 rounded-lg text-sm sm:text-base"
               />
               <button
                 onClick={copyToClipboard}
                 className="p-2 text-gray-600 hover:text-gray-800"
               >
-                <Copy className="w-5 h-5" />
+                <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <a
                 href={shortUrl}
@@ -149,7 +149,7 @@ export default function URLShortener() {
                 rel="noopener noreferrer"
                 className="p-2 text-gray-600 hover:text-gray-800"
               >
-                <ExternalLink className="w-5 h-5" />
+                <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
               </a>
             </div>
           </div>
