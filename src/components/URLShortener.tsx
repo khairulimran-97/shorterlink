@@ -1,11 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Copy, ExternalLink } from 'lucide-react';
 import { nanoid } from 'nanoid';
+import { supabase } from '../lib/supabase';
+import type { UrlLink } from '../types/database.types';
 
 export default function URLShortener() {
   const [url, setUrl] = useState('');
   const [shortUrl, setShortUrl] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'success' | 'error'>('checking');
+
+  useEffect(() => {
+    testConnection();
+  }, []);
+
+  const testConnection = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('links')
+        .select('*')
+        .limit(1);
+
+      if (error) throw error;
+      setConnectionStatus('success');
+      console.log('Connection successful:', data);
+    } catch (err) {
+      console.error('Connection error:', err);
+      setConnectionStatus('error');
+    }
+  };
 
   const isValidUrl = (urlString: string) => {
     try {
@@ -16,7 +40,7 @@ export default function URLShortener() {
     }
   };
 
-  const generateShortUrl = () => {
+  const generateShortUrl = async () => {
     if (!url.trim()) {
       setError('Please enter a URL');
       return;
@@ -28,16 +52,28 @@ export default function URLShortener() {
     }
 
     setError('');
-    const shortId = nanoid(8);
-    const baseUrl = window.location.origin;
-    const newShortUrl = `${baseUrl}/${shortId}`;
-    
-    // Store the mapping in localStorage
-    const urlMappings = JSON.parse(localStorage.getItem('urlMappings') || '{}');
-    urlMappings[shortId] = url;
-    localStorage.setItem('urlMappings', JSON.stringify(urlMappings));
-    
-    setShortUrl(newShortUrl);
+    setLoading(true);
+
+    try {
+      const shortId = nanoid(8);
+      const { error: dbError } = await supabase
+        .from('links')
+        .insert([
+          {
+            original_url: url,
+            short_id: shortId,
+          },
+        ]);
+
+      if (dbError) throw dbError;
+
+      const baseUrl = window.location.origin;
+      setShortUrl(`${baseUrl}/${shortId}`);
+    } catch (err) {
+      setError('Failed to generate short URL. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const copyToClipboard = () => {
@@ -46,6 +82,16 @@ export default function URLShortener() {
 
   return (
     <div className="space-y-4">
+      {connectionStatus === 'checking' && (
+        <div className="text-blue-500">Checking Supabase connection...</div>
+      )}
+      {connectionStatus === 'success' && (
+        <div className="text-green-500">✓ Connected to Supabase</div>
+      )}
+      {connectionStatus === 'error' && (
+        <div className="text-red-500">× Failed to connect to Supabase</div>
+      )}
+
       <div>
         <input
           type="url"
@@ -64,10 +110,19 @@ export default function URLShortener() {
 
       <button
         onClick={generateShortUrl}
-        className="w-full px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600"
+        disabled={loading}
+        className="w-full px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 disabled:bg-blue-300"
       >
-        <Link className="inline-block w-5 h-5 mr-2" />
-        Shorten URL
+        {loading ? (
+          <span className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+          </span>
+        ) : (
+          <>
+            <Link className="inline-block w-5 h-5 mr-2" />
+            Shorten URL
+          </>
+        )}
       </button>
 
       {shortUrl && (

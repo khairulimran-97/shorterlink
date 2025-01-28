@@ -2,16 +2,9 @@ import { useState } from 'react';
 import { Link2, MessageSquare } from 'lucide-react';
 import WhatsAppForm from './components/WhatsAppForm';
 import URLShortener from './components/URLShortener';
-import RedirectHandler from './components/RedirectHandler';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'url' | 'whatsapp'>('url');
-
-  // Check if we're accessing a short URL
-  const path = window.location.pathname;
-  if (path !== '/') {
-    return <RedirectHandler />;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -49,3 +42,4 @@ export default function App() {
       </div>
     </div>
   );
+}
