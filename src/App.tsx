@@ -1,43 +1,59 @@
 import { useState } from 'react';
-import { Link2, MessageSquare } from 'lucide-react';
-import WhatsAppForm from './components/WhatsAppForm';
 import URLShortener from './components/URLShortener';
+import WhatsAppForm from './components/WhatsAppForm';
+import RotateWhatsApp from './components/RotateWhatsApp';
+import RedirectHandler from './components/RedirectHandler';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'url' | 'whatsapp'>('url');
+  const [activeTab, setActiveTab] = useState<'url' | 'whatsapp' | 'rotate'>('url');
+
+  // If the path is not empty, show the redirect handler
+  if (window.location.pathname !== '/') {
+    return <RedirectHandler />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto p-6">
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h1 className="text-2xl font-bold text-center mb-6">Link Shortener</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">Link Shortener</h1>
 
-          <div className="flex gap-2 mb-6">
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <div className="flex space-x-1 mb-6">
             <button
               onClick={() => setActiveTab('url')}
-              className={`flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 
-                ${activeTab === 'url' 
-                  ? 'bg-blue-500 text-white' 
+              className={`flex-1 py-2 px-4 rounded-lg ${
+                activeTab === 'url'
+                  ? 'bg-blue-500 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+              }`}
             >
-              <Link2 className="w-5 h-5" />
               URL Shortener
             </button>
             <button
               onClick={() => setActiveTab('whatsapp')}
-              className={`flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2
-                ${activeTab === 'whatsapp'
+              className={`flex-1 py-2 px-4 rounded-lg ${
+                activeTab === 'whatsapp'
                   ? 'bg-green-500 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+              }`}
             >
-              <MessageSquare className="w-5 h-5" />
               WhatsApp Link
+            </button>
+            <button
+              onClick={() => setActiveTab('rotate')}
+              className={`flex-1 py-2 px-4 rounded-lg ${
+                activeTab === 'rotate'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Rotate WhatsApp
             </button>
           </div>
 
-          {activeTab === 'url' ? <URLShortener /> : <WhatsAppForm />}
+          {activeTab === 'url' && <URLShortener />}
+          {activeTab === 'whatsapp' && <WhatsAppForm />}
+          {activeTab === 'rotate' && <RotateWhatsApp />}
         </div>
       </div>
     </div>
