@@ -1,39 +1,60 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
+import { useState } from 'react';
 import URLShortener from './components/URLShortener';
-import LinkList from './components/LinkList';
+import WhatsAppForm from './components/WhatsAppForm';
 import RotateWhatsApp from './components/RotateWhatsApp';
-import WhatsAppLinkList from './components/WhatsAppLinkList';
+import RedirectHandler from './components/RedirectHandler';
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState<'url' | 'whatsapp' | 'rotate'>('url');
+
+  // If the path is not empty, show the redirect handler
+  if (window.location.pathname !== '/') {
+    return <RedirectHandler />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container max-w-4xl px-4 py-8 mx-auto">
-        <h1 className="mb-8 text-3xl font-bold text-center">URL Shortener</h1>
-        
-        <Tabs defaultValue="shorten" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="shorten">Shorten URL</TabsTrigger>
-            <TabsTrigger value="links">Links</TabsTrigger>
-            <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
-            <TabsTrigger value="whatsapp-links">WhatsApp Links</TabsTrigger>
-          </TabsList>
+      <div className="max-w-2xl mx-auto p-6">
+        <h1 className="text-3xl font-bold text-center mb-8">Link Shortener</h1>
 
-          <TabsContent value="shorten">
-            <URLShortener />
-          </TabsContent>
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <div className="flex space-x-1 mb-6">
+            <button
+              onClick={() => setActiveTab('url')}
+              className={`flex-1 py-2 px-4 rounded-lg ${
+                activeTab === 'url'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              URL Shortener
+            </button>
+            <button
+              onClick={() => setActiveTab('whatsapp')}
+              className={`flex-1 py-2 px-4 rounded-lg ${
+                activeTab === 'whatsapp'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              WhatsApp Link
+            </button>
+            <button
+              onClick={() => setActiveTab('rotate')}
+              className={`flex-1 py-2 px-4 rounded-lg ${
+                activeTab === 'rotate'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Rotate WhatsApp
+            </button>
+          </div>
 
-          <TabsContent value="links">
-            <LinkList />
-          </TabsContent>
-
-          <TabsContent value="whatsapp">
-            <RotateWhatsApp />
-          </TabsContent>
-
-          <TabsContent value="whatsapp-links">
-            <WhatsAppLinkList />
-          </TabsContent>
-        </Tabs>
+          {activeTab === 'url' && <URLShortener />}
+          {activeTab === 'whatsapp' && <WhatsAppForm />}
+          {activeTab === 'rotate' && <RotateWhatsApp />}
+        </div>
       </div>
     </div>
   );

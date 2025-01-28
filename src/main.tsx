@@ -11,6 +11,10 @@ const router = createBrowserRouter([
     element: <App />,
   },
   {
+    path: '/ws/:groupId',
+    element: <RedirectPage />,
+  },
+  {
     path: '/:shortId',
     element: <RedirectPage />,
   },
