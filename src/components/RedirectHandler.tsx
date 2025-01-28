@@ -13,30 +13,53 @@ export default function RedirectHandler() {
         // Check if it's a WhatsApp route
         if (path.startsWith('ws/')) {
           const groupId = path.substring(3); // Remove 'ws/' prefix
+          
+          // First, get the group data
           const { data: groupData, error: groupError } = await supabase
             .from('whatsapp_groups')
-            .select('id')
+            .select('*')
             .eq('group_id', groupId)
             .single();
 
-          if (groupError) throw groupError;
-
-          if (groupData) {
-            const { data: numbers, error: numbersError } = await supabase
-              .from('whatsapp_numbers')
-              .select('country_code, phone_number')
-              .eq('group_id', groupData.id);
-
-            if (numbersError) throw numbersError;
-
-            if (numbers && numbers.length > 0) {
-              const randomNumber = numbers[Math.floor(Math.random() * numbers.length)];
-              const whatsappUrl = `https://wa.me/${randomNumber.country_code.replace('+', '')}${randomNumber.phone_number}`;
-              window.location.href = whatsappUrl;
-              return;
-            }
+          if (groupError) {
+            console.error('Group error:', groupError);
+            setError('WhatsApp group not found');
+            return;
           }
-          setError('WhatsApp group not found');
+
+          if (!groupData) {
+            setError('WhatsApp group not found');
+            return;
+          }
+
+          // Then, get all phone numbers for this group
+          const { data: numbers, error: numbersError } = await supabase
+            .from('whatsapp_numbers')
+            .select('country_code, phone_number')
+            .eq('group_id', groupData.id);
+
+          if (numbersError) {
+            console.error('Numbers error:', numbersError);
+            setError('Failed to fetch WhatsApp numbers');
+            return;
+          }
+
+          if (!numbers || numbers.length === 0) {
+            setError('No WhatsApp numbers found for this group');
+            return;
+          }
+
+          // Select a random number
+          const randomIndex = Math.floor(Math.random() * numbers.length);
+          const selectedNumber = numbers[randomIndex];
+          
+          // Format the WhatsApp URL
+          const formattedCountryCode = selectedNumber.country_code.replace('+', '');
+          const formattedNumber = selectedNumber.phone_number.replace(/\D/g, '');
+          const whatsappUrl = `https://wa.me/${formattedCountryCode}${formattedNumber}`;
+          
+          // Redirect to WhatsApp
+          window.location.href = whatsappUrl;
           return;
         }
 
@@ -47,7 +70,11 @@ export default function RedirectHandler() {
           .eq('short_id', path)
           .single();
 
-        if (linkError) throw linkError;
+        if (linkError) {
+          console.error('Link error:', linkError);
+          setError('Link not found');
+          return;
+        }
 
         if (linkData) {
           window.location.href = linkData.original_url;
