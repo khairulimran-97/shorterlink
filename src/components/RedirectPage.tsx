@@ -12,7 +12,7 @@ export default function RedirectPage() {
       try {
         const { data, error } = await supabase
           .from('links')
-          .select('original_url')
+          .select('original_url, clicks')
           .eq('short_id', shortId)
           .single();
 
@@ -25,7 +25,7 @@ export default function RedirectPage() {
         // Update click count
         await supabase
           .from('links')
-          .update({ clicks: supabase.sql`clicks + 1` })
+          .update({ clicks: (data.clicks || 0) + 1 })
           .eq('short_id', shortId);
 
         // Add protocol if missing
