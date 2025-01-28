@@ -7,20 +7,23 @@ export default function RedirectHandler() {
 
   useEffect(() => {
     const handleRedirect = async () => {
-      const path = window.location.pathname.substring(1); // Remove leading slash
-      console.log('Current path:', path);
+      const path = window.location.pathname.substring(1);
+      const logs: string[] = [`Current path: ${path}`];
+      setDebugInfo(logs.join('\n'));
       
       if (!path) {
-        console.log('No path found');
+        logs.push('No path found');
+        setDebugInfo(logs.join('\n'));
         return;
       }
 
       try {
         // Check if it's a WhatsApp route
         if (path.startsWith('ws/')) {
-          console.log('WhatsApp route detected');
-          const groupId = path.substring(3); // Remove 'ws/' prefix
-          console.log('Group ID:', groupId);
+          logs.push('WhatsApp route detected');
+          const groupId = path.substring(3);
+          logs.push(`Group ID: ${groupId}`);
+          setDebugInfo(logs.join('\n'));
           
           // First, get the group data
           const { data: groupData, error: groupError } = await supabase
@@ -30,16 +33,21 @@ export default function RedirectHandler() {
             .single();
 
           if (groupError) {
-            console.error('Group error:', groupError);
+            logs.push(`Group error: ${groupError.message}`);
+            setDebugInfo(logs.join('\n'));
             setError(`WhatsApp group not found (${groupError.message})`);
             return;
           }
 
           if (!groupData) {
-            console.log('No group data found');
+            logs.push('No group data found');
+            setDebugInfo(logs.join('\n'));
             setError('WhatsApp group not found');
             return;
           }
+
+          logs.push(`Found group with ID: ${groupData.id}`);
+          setDebugInfo(logs.join('\n'));
 
           // Then, get all phone numbers for this group
           const { data: numbers, error: numbersError } = await supabase
@@ -48,27 +56,41 @@ export default function RedirectHandler() {
             .eq('group_id', groupData.id);
 
           if (numbersError) {
-            console.error('Numbers error:', numbersError);
+            logs.push(`Numbers error: ${numbersError.message}`);
+            setDebugInfo(logs.join('\n'));
             setError('Failed to fetch WhatsApp numbers');
             return;
           }
 
           if (!numbers || numbers.length === 0) {
-            console.log('No numbers found');
+            logs.push('No numbers found for group');
+            setDebugInfo(logs.join('\n'));
             setError('No WhatsApp numbers found for this group');
             return;
           }
 
+          logs.push(`Found ${numbers.length} numbers for group`);
+          logs.push('Available numbers:');
+          numbers.forEach((n, i) => {
+            logs.push(`${i + 1}. ${n.country_code}${n.phone_number}`);
+          });
+          setDebugInfo(logs.join('\n'));
+
           // Select a random number
           const randomIndex = Math.floor(Math.random() * numbers.length);
           const selectedNumber = numbers[randomIndex];
+          
+          logs.push(`Selected number at index ${randomIndex}`);
+          logs.push(`Selected: ${selectedNumber.country_code}${selectedNumber.phone_number}`);
           
           // Format the WhatsApp URL
           const formattedCountryCode = selectedNumber.country_code.replace('+', '');
           const formattedNumber = selectedNumber.phone_number.replace(/\D/g, '');
           const whatsappUrl = `https://wa.me/${formattedCountryCode}${formattedNumber}`;
           
-          console.log('Redirecting to:', whatsappUrl);
+          logs.push(`Redirecting to: ${whatsappUrl}`);
+          setDebugInfo(logs.join('\n'));
+          
           window.location.replace(whatsappUrl);
           return;
         }
@@ -81,23 +103,29 @@ export default function RedirectHandler() {
           .single();
 
         if (linkError) {
-          console.error('Link error:', linkError);
+          logs.push(`Link error: ${linkError.message}`);
+          setDebugInfo(logs.join('\n'));
           setError('Link not found');
           return;
         }
 
         if (linkData) {
-          console.log('Redirecting to:', linkData.original_url);
+          logs.push(`Found link: ${linkData.original_url}`);
           let url = linkData.original_url;
           if (!url.startsWith('http://') && !url.startsWith('https://')) {
             url = 'https://' + url;
           }
+          logs.push(`Redirecting to: ${url}`);
+          setDebugInfo(logs.join('\n'));
           window.location.replace(url);
         } else {
-          console.log('No link data found');
+          logs.push('No link data found');
+          setDebugInfo(logs.join('\n'));
           setError('Link not found');
         }
-      } catch (err) {
+      } catch (err: any) {
+        logs.push(`Error: ${err.message}`);
+        setDebugInfo(logs.join('\n'));
         console.error('Redirect error:', err);
         setError('Failed to process redirect');
       }
@@ -124,6 +152,11 @@ export default function RedirectHandler() {
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
         <p className="mt-4 text-gray-600">Redirecting...</p>
+        {debugInfo && (
+          <pre className="mt-4 text-xs text-gray-600 bg-gray-100 p-4 rounded max-w-full overflow-auto">
+            {debugInfo}
+          </pre>
+        )}
       </div>
     </div>
   );
