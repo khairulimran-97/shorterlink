@@ -23,52 +23,38 @@ export default function RedirectHandler() {
           console.log('Group ID:', groupId);
           
           // First, get the group data
-          const groupQuery = supabase
+          const { data: groupData, error: groupError } = await supabase
             .from('whatsapp_groups')
-            .select('*')
+            .select('id')
             .eq('group_id', groupId)
             .single();
-          
-          console.log('Executing group query:', groupQuery);
-          const { data: groupData, error: groupError } = await groupQuery;
 
           if (groupError) {
             console.error('Group error:', groupError);
-            setDebugInfo(`Group Query Error: ${JSON.stringify(groupError)}`);
             setError(`WhatsApp group not found (${groupError.message})`);
             return;
           }
 
-          console.log('Group data:', groupData);
-
           if (!groupData) {
             console.log('No group data found');
-            setDebugInfo('No group data found for ID: ' + groupId);
             setError('WhatsApp group not found');
             return;
           }
 
           // Then, get all phone numbers for this group
-          const numbersQuery = supabase
+          const { data: numbers, error: numbersError } = await supabase
             .from('whatsapp_numbers')
             .select('country_code, phone_number')
             .eq('group_id', groupData.id);
 
-          console.log('Executing numbers query');
-          const { data: numbers, error: numbersError } = await numbersQuery;
-
           if (numbersError) {
             console.error('Numbers error:', numbersError);
-            setDebugInfo(`Numbers Query Error: ${JSON.stringify(numbersError)}`);
             setError('Failed to fetch WhatsApp numbers');
             return;
           }
 
-          console.log('Numbers data:', numbers);
-
           if (!numbers || numbers.length === 0) {
             console.log('No numbers found');
-            setDebugInfo('No numbers found for group ID: ' + groupData.id);
             setError('No WhatsApp numbers found for this group');
             return;
           }
@@ -76,7 +62,6 @@ export default function RedirectHandler() {
           // Select a random number
           const randomIndex = Math.floor(Math.random() * numbers.length);
           const selectedNumber = numbers[randomIndex];
-          console.log('Selected number:', selectedNumber);
           
           // Format the WhatsApp URL
           const formattedCountryCode = selectedNumber.country_code.replace('+', '');
@@ -84,12 +69,11 @@ export default function RedirectHandler() {
           const whatsappUrl = `https://wa.me/${formattedCountryCode}${formattedNumber}`;
           
           console.log('Redirecting to:', whatsappUrl);
-          window.location.href = whatsappUrl;
+          window.location.replace(whatsappUrl);
           return;
         }
 
         // Handle regular short links
-        console.log('Regular link redirect');
         const { data: linkData, error: linkError } = await supabase
           .from('links')
           .select('original_url')
@@ -98,21 +82,23 @@ export default function RedirectHandler() {
 
         if (linkError) {
           console.error('Link error:', linkError);
-          setDebugInfo(`Link Query Error: ${JSON.stringify(linkError)}`);
           setError('Link not found');
           return;
         }
 
         if (linkData) {
           console.log('Redirecting to:', linkData.original_url);
-          window.location.href = linkData.original_url;
+          let url = linkData.original_url;
+          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+          }
+          window.location.replace(url);
         } else {
           console.log('No link data found');
           setError('Link not found');
         }
       } catch (err) {
         console.error('Redirect error:', err);
-        setDebugInfo(`General Error: ${JSON.stringify(err)}`);
         setError('Failed to process redirect');
       }
     };
@@ -135,7 +121,10 @@ export default function RedirectHandler() {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-600">Redirecting...</p>
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Redirecting...</p>
+      </div>
     </div>
   );
 }
