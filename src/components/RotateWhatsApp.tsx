@@ -35,46 +35,6 @@ export default function RotateWhatsApp() {
     return cleanNumber.startsWith('0') ? cleanNumber.slice(1) : cleanNumber;
   };
 
-  const ensureTablesExist = async () => {
-    const { error: checkError } = await supabase
-      .from('whatsapp_groups')
-      .select('id')
-      .limit(1);
-
-    if (checkError && checkError.code === '42P01') {
-      // Tables don't exist, create them
-      const createGroupsTable = `
-        create table if not exists public.whatsapp_groups (
-          id uuid default gen_random_uuid() primary key,
-          group_id text not null unique,
-          name text not null,
-          created_at timestamp with time zone default timezone('utc'::text, now()) not null
-        );
-      `;
-
-      const createNumbersTable = `
-        create table if not exists public.whatsapp_numbers (
-          id uuid default gen_random_uuid() primary key,
-          group_id uuid references whatsapp_groups(id) on delete cascade,
-          phone_number text not null,
-          country_code text not null,
-          created_at timestamp with time zone default timezone('utc'::text, now()) not null
-        );
-      `;
-
-      const createIndexes = `
-        create index if not exists whatsapp_groups_group_id_idx on public.whatsapp_groups(group_id);
-        create index if not exists whatsapp_numbers_group_id_idx on public.whatsapp_numbers(group_id);
-      `;
-
-      const { error: createError } = await supabase.rpc('exec_sql', {
-        sql: createGroupsTable + createNumbersTable + createIndexes
-      });
-
-      if (createError) throw createError;
-    }
-  };
-
   const generateLink = async () => {
     if (!groupName.trim() || !shortId.trim()) {
       setError('Please fill in all required fields');
@@ -90,8 +50,17 @@ export default function RotateWhatsApp() {
     setLoading(true);
 
     try {
-      // Ensure tables exist
-      await ensureTablesExist();
+      // Check if shortId already exists
+      const { data: existingGroup } = await supabase
+        .from('whatsapp_groups')
+        .select('id')
+        .eq('group_id', shortId)
+        .single();
+
+      if (existingGroup) {
+        setError('This short ID is already taken. Please choose another one.');
+        return;
+      }
 
       // Create WhatsApp group
       const { data: groupData, error: groupError } = await supabase
@@ -124,8 +93,8 @@ export default function RotateWhatsApp() {
       setGroupName('');
       setShortId('');
       setPhoneNumbers([{ countryCode: '+60', number: '' }]);
-    } catch (err) {
-      setError('Failed to create WhatsApp group. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to create WhatsApp group. Please try again.');
       console.error(err);
     } finally {
       setLoading(false);
