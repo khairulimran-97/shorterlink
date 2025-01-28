@@ -28,13 +28,23 @@ export default function RedirectPage() {
           .update({ clicks: supabase.sql`clicks + 1` })
           .eq('short_id', shortId);
 
-        window.location.href = data.original_url;
+        // Add protocol if missing
+        let url = data.original_url;
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          url = 'https://' + url;
+        }
+
+        // Use window.location.replace for proper redirection
+        window.location.replace(url);
       } catch (err) {
+        console.error('Redirect error:', err);
         setError('Link not found');
       }
     };
 
-    redirectToUrl();
+    if (shortId) {
+      redirectToUrl();
+    }
   }, [shortId, navigate]);
 
   if (error) {
