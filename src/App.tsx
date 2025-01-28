@@ -2,15 +2,9 @@ import { useState } from 'react';
 import URLShortener from './components/URLShortener';
 import WhatsAppForm from './components/WhatsAppForm';
 import RotateWhatsApp from './components/RotateWhatsApp';
-import RedirectHandler from './components/RedirectHandler';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'url' | 'whatsapp' | 'rotate'>('url');
-
-  // If the path is not empty, show the redirect handler
-  if (window.location.pathname !== '/') {
-    return <RedirectHandler />;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">

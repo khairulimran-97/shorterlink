@@ -2,7 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
-import RedirectPage from './components/RedirectPage';
+import RedirectHandler from './components/RedirectHandler';
+import WhatsAppRedirect from './components/WhatsAppRedirect';
 import './index.css';
 
 const router = createBrowserRouter([
@@ -11,12 +12,12 @@ const router = createBrowserRouter([
     element: <App />,
   },
   {
-    path: '/ws/:groupId',
-    element: <RedirectPage />,
+    path: '/ws/*',
+    element: <WhatsAppRedirect />,
   },
   {
-    path: '/:shortId',
-    element: <RedirectPage />,
+    path: '*',
+    element: <RedirectHandler />,
   },
 ]);
 

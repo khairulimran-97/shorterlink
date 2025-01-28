@@ -22,19 +22,16 @@ export default function RedirectPage() {
           return;
         }
 
-        // Update click count
         await supabase
           .from('links')
           .update({ clicks: (data.clicks || 0) + 1 })
           .eq('short_id', shortId);
 
-        // Add protocol if missing
         let url = data.original_url;
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
           url = 'https://' + url;
         }
 
-        // Use window.location.replace for proper redirection
         window.location.replace(url);
       } catch (err) {
         console.error('Redirect error:', err);
